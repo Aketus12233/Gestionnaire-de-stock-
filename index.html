@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion de Stock</title>
+  <!-- Bootstrap CSS pour le style -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container mt-5">
+    <h1 class="text-center">Gestion de Stock</h1>
+    
+    <!-- Formulaire d'ajout de produit -->
+    <div class="card p-3 mt-3">
+      <h2>Ajouter un produit</h2>
+      <form id="addProductForm">
+        <div class="mb-3">
+          <label for="productName" class="form-label">Nom de produit</label>
+          <input type="text" class="form-control" id="productName" required>
+        </div>
+        <div class="mb-3">
+          <label for="productQuantity" class="form-label">Quantité</label>
+          <input type="number" class="form-control" id="productQuantity" required>
+        </div>
+        <div class="mb-3">
+          <label for="productPrice" class="form-label">Prix</label>
+          <input type="number" class="form-control" id="productPrice" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Ajouter Produit</button>
+      </form>
+    </div>
+
+    <!-- Table des produits -->
+    <div class="card p-3 mt-3">
+      <h2>Produits en stock</h2>
+      <table class="table table-bordered" id="productTable">
+        <thead>
+          <tr>
+            <th>Nom du Produit</th>
+            <th>Quantité</th>
+            <th>Prix Unitaire</th>
+            <th>Prix Total</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Résumé des Totaux -->
+    <div class="card p-3 mt-3">
+      <h2>Résumé</h2>
+      <p><strong>Total de tous les produits :</strong> <span id="totalProducts">0</span> FCFA</p>
+      <p><strong>Total des produits vendus :</strong> <span id="totalSold">0</span> FCFA</p>
+      <p><strong>Total des produits restant :</strong> <span id="totalRemaining">0</span> FCFA</p>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    let products = [];
+    let totalSold = 0;
+
+    // Ajouter un produit
+    document.getElementById('addProductForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('productName').value;
+      const quantity = parseInt(document.getElementById('productQuantity').value);
+      const price = parseFloat(document.getElementById('productPrice').value);
+      const total = price * quantity;
+
+      // Si le produit existe déjà, on le met à jour
+      let existingProduct = products.find(product => product.name === name);
+      if (existingProduct) {
+        existingProduct.quantity += quantity;
+        existingProduct.total = existingProduct.quantity * existingProduct.price;
+      } else {
+        products.push({ name, quantity, price, total });
+      }
+
+      displayProducts();
+      calculateTotals();
+      document.getElementById('addProductForm').reset();
+    });
+
+    // Afficher les produits
+    function displayProducts() {
+      const tableBody = document.querySelector('#productTable tbody');
+      tableBody.innerHTML = '';
+      products.forEach((product, index) => {
+        tableBody.innerHTML += `
+          <tr>
+            <td>${product.name}</td>
+            <td>${product.quantity}</td>
+            <td>${product.price.toFixed(2)} FCFA</td>
+            <td>${product.total.toFixed(2)} FCFA</td>
+            <td>
+              <button class="btn btn-success btn-sm" onclick="enterProduct(${index})">Entrée</button>
+              <button class="btn btn-warning btn-sm" onclick="exitProduct(${index})">Sortie</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // Entrer plus de stock pour un produit
+    function enterProduct(index) {
+      const quantity = prompt('Quantité à ajouter :');
+      if (quantity && !isNaN(quantity)) {
+        products[index].quantity += parseInt(quantity);
+        products[index].total = products[index].quantity * products[index].price;
+        displayProducts();
+        calculateTotals();
+      }
+    }
+
+    // Sortir du stock pour un produit
+    function exitProduct(index) {
+      const quantity = prompt('Quantité à retirer :');
+      if (quantity && !isNaN(quantity)) {
+        const qty = parseInt(quantity);
+        if (qty <= products[index].quantity) {
+          products[index].quantity -= qty;
+          products[index].total = products[index].quantity * products[index].price;
+          totalSold += qty * products[index].price;
+          displayProducts();
+          calculateTotals();
+        } else {
+          alert('Quantité insuffisante en stock');
+        }
+      }
+    }
+
+    // Calculer les totaux
+    function calculateTotals() {
+      let totalRemaining = 0;
+      let totalProducts = 0;
+
+      products.forEach(product => {
+        totalProducts += product.total;
+        totalRemaining += product.quantity * product.price;
+      });
+
+      document.getElementById('totalProducts').innerText = totalProducts.toFixed(2);
+      document.getElementById('totalRemaining').innerText = totalRemaining.toFixed(2);
+      document.getElementById('totalSold').innerText = totalSold.toFixed(2);
+    }
+  </script>
+
+</body>
+</html>
